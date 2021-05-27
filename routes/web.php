@@ -16,3 +16,18 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/a', function () {
+    return view('a');
+});
+Route::get('/b',[\App\WebSocketHandler::class,'b']);
+
+use Symfony\Component\Console\Output\NullOutput;
+use BeyondCode\LaravelWebSockets\Server\Logger\WebsocketsLogger;
+
+app()->singleton(WebsocketsLogger::class, function () {
+    return (new WebsocketsLogger(new NullOutput()))->enable(false);
+});
+
+use BeyondCode\LaravelWebSockets\Facades\WebSocketsRouter;
+
+WebSocketsRouter::webSocket('/reader_stream', \App\WebSocketHandler::class);
