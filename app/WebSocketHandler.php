@@ -6,68 +6,46 @@ use Ratchet\ConnectionInterface;
 use Ratchet\RFC6455\Messaging\MessageInterface;
 use Ratchet\WebSocket\MessageComponentInterface;
 use DB;
-use SplObjectStorage;
 use function Ratchet\Client\connect;
 
 class WebSocketHandler implements MessageComponentInterface
 {
-    protected $clients;
-    public function __construct() {
-        $this->clients = new SplObjectStorage;
-    }
-
-    /**
-     * When a new connection is opened it will be passed to this method
-     * @param ConnectionInterface $conn The socket/connection that just connected to your application
-     * @throws \Exception
-     */
-    function onOpen(ConnectionInterface $conn)
+    public function onOpen(ConnectionInterface $connection)
     {
-        // Store the new connection in $this->clients
-        $this->clients->attach($conn);
-        echo "New connection! ({$conn->resourceId})\n";
+        // TODO: Implement onOpen() method.
+        \Log::debug('ON OPEN');
+        $socketId = sprintf('%d.%d', random_int(1, 1000000000), random_int(1, 1000000000));
+        $connection->socketId = $socketId;
+        $connection->app = new \stdClass();
+        $connection->app->id = 'my_app';
     }
 
-    /**
-     * This is called before or after a socket is closed (depends on how it's closed).  SendMessage to $conn will not result in an error if it has already been closed.
-     * @param ConnectionInterface $conn The socket/connection that is closing/closed
-     * @throws \Exception
-     */
-    function onClose(ConnectionInterface $conn)
+    public function onClose(ConnectionInterface $connection)
     {
         // TODO: Implement onClose() method.
+        \Log::debug('ON CLOSE');
     }
 
-    /**
-     * If there is an error with one of the sockets, or somewhere in the application where an Exception is thrown,
-     * the Exception is sent back down the stack, handled by the Server and bubbled back up the application through this method
-     * @param ConnectionInterface $conn
-     * @param \Exception $e
-     * @throws \Exception
-     */
-    function onError(ConnectionInterface $conn, \Exception $e)
+    public function onError(ConnectionInterface $connection, \Exception $e)
     {
         // TODO: Implement onError() method.
+        \Log::debug('ON ERROR');
+        // \Log::debug([$connection]);
+        // \Log::debug($e);
     }
 
-    public function onMessage(ConnectionInterface $conn, MessageInterface $msg)
+    public function onMessage(ConnectionInterface $connection, MessageInterface $msg)
     {
-        foreach ( $this->clients as $client ) {
-            if ( $conn->resourceId == $client->resourceId ) {
-                continue;
-            }
-            $client->send( "Client $conn->resourceId said $msg" );
-        }
+        $connection->send('Hello World!');
+        // TODO: Implement onMessage() method.
+        \Log::debug(['ON MESSAGE', $msg]);
     }
+
     public function b(){
-
-        connect('ws://localhost:6001/reader_stream')->then(
-
-            function($conn) {
+        \Ratchet\Client\connect('ws://localhost:6001/reader_stream')->then(function($conn) {
             $conn->send('hash updated!');
             $conn->close();
-        }, function ($e) {
-//            dd($e);
-        });
+        }, function ($e) {});
+       return true;
     }
 }
