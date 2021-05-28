@@ -13,7 +13,8 @@
         "laravel/framework": "^8.40",
         "laravel/tinker": "^2.5",
         "pusher/pusher-php-server": "^3.0",
-        "ratchet/pawl": "^0.3.5"
+        "ratchet/pawl": "^0.3.5",
+        "ext-json": "*"
     },
     "require-dev": {
         "facade/ignition": "^2.5",

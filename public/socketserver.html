@@ -25,6 +25,7 @@
   function onOpen(evt)
   {
     writeToScreen("CONNECTED");
+    console.log("open: ");
     console.log(evt);
     //doSend("WebSocket messge");
   }
@@ -65,6 +66,7 @@
 
   function onMessage(evt)
   {
+      console.log('message: ');
       console.log(evt);
     writeToScreen('<span style="color: red;">RESPONSE: ' + evt.data+'</span>');
     //websocket.close();
