@@ -21,6 +21,11 @@ Route::get('/a', function () {
 });
 Route::get('/b',[\App\WebSocketHandler::class,'b']);
 
+Route::get('/t', function () {
+    event(new App\Events\RealTimeMessage("&something=12-12-13"));
+    dd('Event Run Successfully.');
+});
+
 use Symfony\Component\Console\Output\NullOutput;
 use BeyondCode\LaravelWebSockets\Server\Logger\WebsocketsLogger;
 
