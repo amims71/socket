@@ -33,6 +33,7 @@ class WebSocketHandler implements MessageComponentInterface
             ->limitConcurrentConnections($connection)
             ->generateSocketId($connection)
             ->establishConnection($connection);
+//        dd($connection->httpRequest->getUri()->getHost());
         $channel=$this->channelManager->findOrCreate('12345','events');
         $channel->subscribe($connection,new \stdClass());
 
