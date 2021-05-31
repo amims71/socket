@@ -11,14 +11,19 @@ class RealTimeMessage implements ShouldBroadcast
     use SerializesModels;
 
     public $message;
+    public $channel;
 
-    public function __construct($message)
+    public function __construct($message,$channel='events')
     {
         $this->message = $message;
+        $this->channel = $channel;
     }
 
     public function broadcastOn()
     {
-        return new Channel('events');
+        return new Channel($this->channel);
+    }
+    public  function broadcastWith(){
+        return $this->message;
     }
 }
