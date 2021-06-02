@@ -24,6 +24,6 @@ class RealTimeMessage implements ShouldBroadcast
         return new Channel($this->channel);
     }
     public  function broadcastWith(){
-        return $this->message;
+        return [$this->message];
     }
 }
