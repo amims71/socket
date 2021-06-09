@@ -20,11 +20,12 @@ use function Ratchet\Client\connect;
 
 class WebSocketHandler implements MessageComponentInterface
 {
-    protected $channelManager;
+    protected $clients;
 
-    public function __construct(ChannelManager $channelManager)
+    public function __construct()
     {
-        $this->channelManager = $channelManager;
+        $this->clients = array();
+
     }
     public function onOpen(ConnectionInterface $connection)
     {
@@ -33,21 +34,22 @@ class WebSocketHandler implements MessageComponentInterface
             ->limitConcurrentConnections($connection)
             ->generateSocketId($connection)
             ->establishConnection($connection);
-//        dd($connection->httpRequest->getUri()->getHost());
-        $channel=$this->channelManager->findOrCreate('12345','events');
-        $channel->subscribe($connection,new \stdClass());
+        $this->clients[$connection->socketId]=$connection;
         $connection->send('test');
         \Log::debug('ON OPEN');
     }
 
     public function onClose(ConnectionInterface $connection)
     {
-        $this->channelManager->removeFromAllChannels($connection);
+        \Log::debug(count($this->clients));
 
+        unset($this->clients[$connection->socketId]);
+        $connection->close();
         DashboardLogger::disconnection($connection);
 
         StatisticsLogger::disconnection($connection);
         \Log::debug('ON CLOSE');
+        \Log::debug(count($this->clients));
     }
 
     public function onError(ConnectionInterface $connection, Exception $exception)
@@ -62,9 +64,14 @@ class WebSocketHandler implements MessageComponentInterface
 
     public function onMessage(ConnectionInterface $connection, MessageInterface $message)
     {
-        $message = PusherMessageFactory::createForMessage($message, $connection, $this->channelManager);
-
-        $message->respond();
+        $requestContent='xyz';
+//        dump(count($this->clients));
+        foreach ($this->clients as $key=>$client) {
+//dd($client->socketId);
+            if ($connection !== $client) {
+                $client->send('&versions_hash='.$requestContent);
+            }
+        }
 
         StatisticsLogger::webSocketMessage($connection);
         \Log::debug('ON MESSAGE');
@@ -107,9 +114,10 @@ class WebSocketHandler implements MessageComponentInterface
 
     protected function generateSocketId(ConnectionInterface $connection)
     {
-        $socketId = sprintf('%d.%d', random_int(1, 1000000000), random_int(1, 1000000000));
-
-        $connection->socketId = $socketId;
+//        $socketId = sprintf('%d.%d', random_int(1, 1000000000), random_int(1, 1000000000));
+        $queryString = $this->queryToArray($connection->httpRequest->getUri()->getQuery());
+        $guid = isset($queryString['guid']) ? $queryString['guid']:'';
+        $connection->socketId = $guid;
 
         return $this;
     }
@@ -129,5 +137,26 @@ class WebSocketHandler implements MessageComponentInterface
         StatisticsLogger::connection($connection);
 
         return $this;
+    }
+    public function queryToArray($qry)
+    {
+        $result = array();
+        //string must contain at least one = and cannot be in first position
+        if(strpos($qry,'=')) {
+
+            if(strpos($qry,'?')!==false) {
+                $q = parse_url($qry);
+                $qry = $q['query'];
+            }
+        }else {
+            return false;
+        }
+
+        foreach (explode('&', $qry) as $couple) {
+            list ($key, $val) = explode('=', $couple);
+            $result[$key] = $val;
+        }
+
+        return empty($result) ? false : $result;
     }
 }

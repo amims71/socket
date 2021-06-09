@@ -1,7 +1,10 @@
 <?php
 
+use BeyondCode\LaravelWebSockets\WebSockets\Channels\ChannelManager;
+use BeyondCode\LaravelWebSockets\WebSockets\Channels\ChannelManagers\ArrayChannelManager;
 use Illuminate\Support\Facades\Route;
 
+use Ratchet\ConnectionInterface;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -21,7 +24,13 @@ Route::get('/a', function () {
 });
 Route::get('/b',[\App\WebSocketHandler::class,'b']);
 
-Route::get('/t', function () {
+Route::get('/t', function (ChannelManager $channelManager) {
+    \Ratchet\Client\connect('ws://localhost:6001/reader_stream')->then(function($connection) {
+//        dd($connection);
+        $connection->send('hash updated!');
+        $connection->close();
+    }, function ($e) {});
+//    dd($channel);
     event(new App\Events\RealTimeMessage("&something=12-12-13"));
     dd('Event Run Successfully.');
 });
